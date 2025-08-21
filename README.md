@@ -20,7 +20,7 @@ An asynchronous Battleship game server built using **I/O multiplexing** with the
 ### Compilation
 
 ```bash
-gcc server.c gamelogic.c user.c -o server
+make server 
 ```
 
 ### Running

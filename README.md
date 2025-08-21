@@ -8,6 +8,7 @@ An asynchronous Battleship game server built using **I/O multiplexing** with the
 ## Features
 
 * Asynchronous server using `select()` for multiple clients
+* Stores connected clients in a linked list structure
 * Non-blocking I/O to handle multiple game sessions concurrently
 * Handling of errors such as SIGPIPE, EAGAIN regarding non-blocking I/O
 * Simple Battleship game logic for up to ~2000 players (the limit of select()!)
@@ -43,5 +44,6 @@ Running as a client:
 
 * Improve game state handling and persistence
 * Implement better error handling and logging
-* Branch out to epoll() API, use more advanced C library functions 
+* Branch out to epoll() API, use more advanced C library functions
+* Use more efficient data structures to store clients, for larger handling. 
 

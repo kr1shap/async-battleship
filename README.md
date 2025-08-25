@@ -5,7 +5,7 @@
 
 An asynchronous Battleship game server built using **I/O multiplexing** with the Unix `select()` API. This project demonstrates socket programming in C, handling of multiple clients [non-blocking issues handled], as well as other errors such as 'writers block'. 
 
-# Updates [08.29.2025]
+## Updates [08.29.2025]
 * Added random coordinate generating option for users 
 * Allowed users to send async messages to other registered users
 * Added ANSI colouring to server -> client messages

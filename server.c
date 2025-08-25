@@ -11,6 +11,19 @@
 #include "user.h"
 #include "gamelogic.h"
 
+#define RED     "\033[31m"
+#define GREEN   "\033[32m"
+#define YELLOW  "\033[33m"
+#define BLUE    "\033[34m"
+#define MAGENTA "\033[35m"
+#define CYAN    "\033[36m"
+#define BOLDRED "\033[1;31m"
+#define RESET   "\033[0m"
+#define BOLD    "\033[1m"
+
+//Global var
+int clientLength=0;
+
 //Function sets nonblocking mode on socket_fd
 void setNonBlocking(int socket_fd) { 
     //Set to nonblocking 
@@ -25,6 +38,7 @@ void checkWrite(char msg[], int len, player*player) {
         player->isConnected = 0; // premature disconnect
     }
 }
+
 
 //Function sets sighandler for SIGPIPE to be ignored
 void ignore_sigpipe(void){
@@ -42,10 +56,11 @@ void broadcast_hit_miss(player*head, player*victim, player*attacker, int isHitOr
             char buffer[128]; //buffer to write message 
             int len; 
             if(isHitOrMiss) { //hit msg
-                len = snprintf(buffer, sizeof(buffer), "HIT %s %d %d %s\n", attacker->name, x, y, victim->name);
+                // len = snprintf(buffer, sizeof(buffer), BOLDRED "HIT %s %d %d %s\n" RESET, attacker->name, x, y, victim->name);
+                len = snprintf(buffer, sizeof(buffer),"HIT " YELLOW "%s" RESET" " MAGENTA "%d" RESET" " MAGENTA "%d" RESET" " YELLOW "%s" RESET "\n",attacker->name, x, y, victim->name);
             }
             else { //if miss
-                len = snprintf(buffer, sizeof(buffer), "MISS %s %d %d\n", attacker->name, x, y);
+                len = snprintf(buffer, sizeof(buffer),"MISS " YELLOW "%s" RESET" " MAGENTA "%d" RESET" " MAGENTA "%d" RESET "\n",attacker->name, x, y);
             }
             if (len > 0) { //if snprintf succeeds, call checkwrite to write and handle errors if needed (i.e. disconnection)
                 checkWrite(buffer, len, temp);
@@ -64,10 +79,10 @@ void broadcast_gg_join(player*head, player*target, int isGG) {
         int len; 
         if(temp->isConnected==1 && temp->isRegistered==1) { //only broadcast given they are registered AND connected
             if(isGG) { //gg msg
-                len = snprintf(buffer, sizeof(buffer), "GG %s\n", target->name);
+                len = snprintf(buffer, sizeof(buffer), RED "GG %s\n" RESET, target->name);
             }
             else { //if join
-                len = snprintf(buffer, sizeof(buffer), "JOIN %s\n", target->name);
+                len = snprintf(buffer, sizeof(buffer), GREEN "JOIN %s\n" RESET, target->name);
             }
             if (len > 0) { //if snprintf succeeds, call checkwrite to write and handle errors if needed (i.e. disconnection)
                 checkWrite(buffer, len, temp);
@@ -139,18 +154,67 @@ void decode_message_unregistered(player*c, player* phead, char msg[110]) {
             if(validate == 1) { 
                 //register player (this sets registered status)
                 registerPlayer(c, name, x, y, direction); 
-                checkWrite("WELCOME\n", 8, c); //Attempt to write 'WELCOME' to the user
+                checkWrite(GREEN BOLD "WELCOME\n" RESET, strlen(GREEN BOLD "WELCOME\n" RESET), c);
                 broadcast_gg_join(phead, c, 0); //Broadcast join message
                 return; //return early 
             }
             //name taken 
             else if(validate == 0) { 
-                checkWrite("TAKEN\n", 6, c); //Attempt to write 'TAKEN' to the user
+                checkWrite(RED BOLD "TAKEN\n" RESET, strlen(RED BOLD "TAKEN\n" RESET), c); //Attempt to write 'TAKEN' to the user
                 return; 
             }
-        } 
+        }
+        //Sending no coordinates means auto coords!
+        else if(sscanf(msg, "REG %20s\n", name) == 1) { 
+            int validate = validatePlayerCreationRand(phead, name, &x, &y, &direction); 
+            //If we can create the player, register them!!
+            if(validate == 1) { 
+                //register player (this sets registered status)
+                registerPlayer(c, name, x, y, direction); 
+                checkWrite(GREEN BOLD "WELCOME\n" RESET, strlen(GREEN BOLD "WELCOME\n" RESET), c);
+                char buf[1024];
+                int len = snprintf(buf, sizeof(buf), "YOUR COORDS, x: " MAGENTA "%d" RESET " y: " MAGENTA "%d" RESET " direction: " BLUE "%c" RESET "\n", x, y, direction);
+                if(len > 0) checkWrite(buf, len, c); //Attempt to write the given coords to the user
+                broadcast_gg_join(phead, c, 0); //Broadcast join message
+                return; //return early 
+            }
+            //name taken 
+            else if(validate == 0) { 
+                checkWrite(RED BOLD "TAKEN\n" RESET, strlen(RED BOLD "TAKEN\n" RESET), c); //Attempt to write 'TAKEN' to the user
+                return; 
+            }
+        }
+
     }
-    checkWrite("INVALID\n", 8, c); //Else, we have invalid message
+    checkWrite(RED BOLD "INVALID\n" RESET, strlen(RED BOLD "INVALID\n" RESET), c);
+
+}
+
+//Function prints out entire LL of usernames to given client 
+//Accumulates in dynamic buffer, then all sent to client
+void printNames(player* phead, player* c) {
+    int bufSize = 128; //rough inital estimate
+    char *buf = malloc(bufSize);
+    if(!buf) return;
+    buf[0] = '\0';
+    strcat(buf, CYAN BOLD ". ݁₊ ⊹ . PLAYER LIST . ⊹ ₊ ݁.\n" RESET);
+    player* temp = phead;
+    while(temp) {
+        if(temp->isConnected && temp->isRegistered) { 
+            int needed = strlen(buf) + strlen(temp->name) + 2; //newline and terminating char 
+            if(needed > bufSize) {
+                bufSize *= 2;
+                buf = realloc(buf, bufSize);
+                if(!buf) return;
+            }
+            strcat(buf, temp->name);
+            strcat(buf, "\n");
+        }
+        temp = temp->next;
+    }
+
+    checkWrite(buf, strlen(buf), c);
+    free(buf);
 }
 
 //Function decodes a registered message
@@ -158,6 +222,8 @@ void decode_message_registered(player*c, player* phead, char msg[110]) {
     int x, y; 
     int hit = 0; //stores whether someone has been hit or not 
     player* temp = phead; 
+    char message[61];
+    char name[21];
     if(strncmp("BOMB", msg, 4) == 0) {  //The first 4 char is 'BOMB'
         if (sscanf(msg, "BOMB %d %d\n", &x, &y) == 2) { 
             while(temp!=NULL) { //iterate through entire list 
@@ -175,10 +241,30 @@ void decode_message_registered(player*c, player* phead, char msg[110]) {
             return; 
         }
     }
-    checkWrite("INVALID\n", 8, c); //Else, we have invalid message
+    else if(strncmp("SEND", msg, 4) == 0) { //client wants to send a message to a user!
+        if (sscanf(msg, "SEND %20s %60[^\n]", name, message) == 2) { 
+            //iterate through LL and see if client name exists, if not; send invalid
+            if(strcmp(name, c->name) == 0) checkWrite(CYAN BOLD "YOU CAN'T SEND YOURSELF THAT!\n" RESET, strlen(CYAN BOLD "YOU CAN'T SEND YOURSELF THAT!\n" RESET), c); return; 
+            while(temp!=NULL) { //iterate through entire list 
+                if(temp!= c && temp->isConnected==1 && temp->isRegistered==1 && strcmp(name, temp->name)==0) {  //must be registered and connected user to send to!
+                    char buf[1024];
+                    int len = snprintf(buf, sizeof(buf), "SENT FROM " YELLOW "%s" RESET ": %s\n", c->name, message);
+                    if(len>0) checkWrite(buf, len, temp);
+                    return;
+                }
+                temp = temp->next; 
+            }
+            checkWrite(RED BOLD "USER DOES NOT EXIST!\n" RESET, strlen(RED BOLD "USER DOES NOT EXIST!\n" RESET), c);
+            return;
+        }
+    }
+    else if(strcmp("LIST\n", msg) == 0) { 
+        printNames(phead, c);
+        return;
+    }
+    checkWrite(RED BOLD "INVALID\n" RESET, strlen(RED BOLD "INVALID\n" RESET), c);
     return; 
 }
-
 
 //Function checks for any deaths, this marks them as disconnected
 void check_deaths(player*phead) { 
@@ -190,6 +276,7 @@ void check_deaths(player*phead) {
             //Then set to not connected/registered
             temp->isConnected = 0; 
             temp->isRegistered = 0; 
+            clientLength--;
         }
         else if(temp->isConnected==0 && temp->isRegistered==1) { //special case: not connected user but is registered, we should broadcast gg instance
             broadcast_gg_join(phead, temp, 1); 
@@ -260,6 +347,7 @@ int main(int argc, char const* argv[]) {
                 playerHead = addPlayer(playerHead, createPlayer(cfd)); //add to client
                 setNonBlocking(cfd); //set nonblocking mode
                 continue; //re-iterate with newly freshened L.L
+                clientLength++;
             }   
         }
 

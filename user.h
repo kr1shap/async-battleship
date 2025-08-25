@@ -23,6 +23,7 @@ typedef struct player {
 
 //Return value: -1 if invalid, 0 if valid
 int validatePlayerCreation(player*head, int x, int y, char name[21], char isVert);
+int validatePlayerCreationRand(player*head, char name[21], int* x, int* y, char* direction);
 
 //insert coordinates 
 void insertCoord(player*player, int x, int y, char isVert);

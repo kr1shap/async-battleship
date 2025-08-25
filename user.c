@@ -2,12 +2,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 
 //get player name
 
 //Validate if we can create the player ship 
 //Return value: -1 if invalid, 0 if name taken, 1 if valid
 int validatePlayerCreation(player*head, int x, int y, char name[21], char isVert) { 
+    srand(time(NULL));
     //first see if name is taken (traverse through LL)
     player*temp = head; 
     while(temp!=NULL) { 
@@ -26,6 +28,33 @@ int validatePlayerCreation(player*head, int x, int y, char name[21], char isVert
         return 1; 
     }
     else return -1; //invalid number given 
+}
+
+
+//Validate if we can create the player ship 
+//Return value: -1 if invalid, 0 if name taken, 1 if valid
+int validatePlayerCreationRand(player*head, char name[21], int* x, int* y, char* direction) { 
+    srand(time(NULL));
+    //first see if name is taken (traverse through LL)
+    player*temp = head; 
+    while(temp!=NULL) { 
+        if(strcmp(temp->name, name) == 0 && temp->isConnected == 1 && temp->isRegistered == 1) return 0; //name taken 
+        temp = temp->next; 
+    }
+    //Until valid 
+    while(1) { 
+        //do automatic placement
+        *x = (rand() % (9 - 0 + 1)) + 0;
+        *y = (rand() % (9 - 0 + 1)) + 0;
+        int val = (rand() % (1 - 0 + 1)) + 0;
+        if(!val) *direction='-';
+        else *direction='|';
+        if(*direction=='-') if(*x-2 < 0 || *x+2 > 9) continue;
+        if(*y-2 < 0 || *y+2 > 9) continue; 
+        break;   
+    }
+    return 1; //valid automatically 
+
 }
 
 //insert coordinates 

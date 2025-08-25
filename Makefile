@@ -9,5 +9,8 @@ OBJ = server.o user.o gamelogic.o
 server: $(OBJ)
 	$(CC) $(CFLAGS) $(OBJ) -o server
 
+bot: clientbot.o 
+	$(CC) $(CFLAGS) clientbot.c -o clientbot
+
 clean:
 	rm -f *.o server

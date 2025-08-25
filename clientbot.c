@@ -11,7 +11,7 @@
 #include <time.h>
 
 #define BUF_SIZE 1024
-
+//
 
 int main(int argc, char const* argv[]) {
     if (argc < 2) {
@@ -77,7 +77,7 @@ int main(int argc, char const* argv[]) {
         srand(time(NULL));
         int val = (rand() % (5 - 2 + 1)) + 2;
         // Sleep first for given arbituary time, then send bomb message
-        sleep(1);
+        sleep(val);
         snprintf(buffer, sizeof(buffer), "BOMB %d %d\n", x, y++);
         if (write(sockfd, buffer, strlen(buffer)) < 0) {
             perror("Write failed");

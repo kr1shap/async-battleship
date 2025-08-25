@@ -5,10 +5,11 @@
 
 An asynchronous Battleship game server built using **I/O multiplexing** with the Unix `select()` API. This project demonstrates socket programming in C, handling of multiple clients [non-blocking issues handled], as well as other errors such as 'writers block'. 
 
-## Updates [08.29.2025]
+## Updates [08.25.2025]
 * Added random coordinate generating option for users 
 * Allowed users to send async messages to other registered users
 * Added ANSI colouring to server -> client messages
+* Client bot! Use it for testing/running
 
 ## Features
 * Asynchronous server using `select()` for multiple clients
@@ -39,6 +40,7 @@ LIST    #list out all registered users, and their usernames
 
 ```bash
 make server 
+make bot
 ```
 
 ### Running
@@ -50,10 +52,16 @@ Start the server:
 ```
 
 Running as a client:
-- In the future, I will add my own client, but to act as a client, you can use the 'nc' command in a new terminal, where port is the same number used in starting the server
+- To act as a client, you can use the 'nc' command in a new terminal, where port is the same number used in starting the server
 
 ```bash
  nc localhost <port>
+```
+
+For the client bot, running it is as simple as you think 
+
+```bash
+./clientbot port    #note that the bot connects to localhost. Thus, this game will work on your local machine.
 ```
 
 ## Future Updates

@@ -244,7 +244,10 @@ void decode_message_registered(player*c, player* phead, char msg[110]) {
     else if(strncmp("SEND", msg, 4) == 0) { //client wants to send a message to a user!
         if (sscanf(msg, "SEND %20s %60[^\n]", name, message) == 2) { 
             //iterate through LL and see if client name exists, if not; send invalid
-            if(strcmp(name, c->name) == 0) checkWrite(CYAN BOLD "YOU CAN'T SEND YOURSELF THAT!\n" RESET, strlen(CYAN BOLD "YOU CAN'T SEND YOURSELF THAT!\n" RESET), c); return; 
+            if(strcmp(name, c->name) == 0)  { 
+                checkWrite(CYAN BOLD "YOU CAN'T SEND YOURSELF THAT!\n" RESET, strlen(CYAN BOLD "YOU CAN'T SEND YOURSELF THAT!\n" RESET), c); 
+                return; 
+            }
             while(temp!=NULL) { //iterate through entire list 
                 if(temp!= c && temp->isConnected==1 && temp->isRegistered==1 && strcmp(name, temp->name)==0) {  //must be registered and connected user to send to!
                     char buf[1024];
@@ -293,6 +296,7 @@ int main(int argc, char const* argv[]) {
     player* playerHead = NULL; //LL of all clients
     int sfd, maxfd;
     struct sockaddr_in serverAdd;
+    int opt = 1;
     ignore_sigpipe(); //ignore SIGPIPE
     //Create instances of variables 
     fd_set readfds;
@@ -300,6 +304,7 @@ int main(int argc, char const* argv[]) {
     memset(&serverAdd, 0, sizeof(struct sockaddr_in)); //best practice due to potential padding 
     if((sfd=socket(AF_INET, SOCK_STREAM, 0))==-1) return 1; //failure to make socket
     maxfd = sfd; //set maxfd to sfd for now...
+    setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
     //fill in address struct 
     serverAdd.sin_family = AF_INET; //ipv4 

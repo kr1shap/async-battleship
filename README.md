@@ -66,7 +66,5 @@ For the client bot, running it is as simple as you think
 
 ## Future Updates
 
-* Implement a front-end UI (so clients don't have to use the terminal)
-* Add a client bot!
-* Implement better error handling and logging
+* Implement a front-end (so clients don't have to use the terminal)
 
